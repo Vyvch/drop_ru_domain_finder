@@ -94,3 +94,17 @@ def api_get_top(date_type: str = "today") -> list[dict]:
         
     _LLM_CACHE[date_type] = {"data": result, "timestamp": time.time()}
     return result
+
+from analyzer import calculate_domain_score
+from pydantic import BaseModel
+
+class AnalyzeRequest(BaseModel):
+    domains: list[str]
+
+@app.post("/api/analyze")
+def api_analyze_domains(payload: AnalyzeRequest):
+    """Анализирует список доменов и возвращает оценку привлекательности."""
+    results = [calculate_domain_score(d) for d in payload.domains]
+    results.sort(key=lambda x: x["score"], reverse=True)
+    return {"results": results}
+
