@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+from typing import List
 import datetime
 import time
 import os
@@ -94,3 +95,12 @@ def api_get_top(date_type: str = "today") -> list[dict]:
         
     _LLM_CACHE[date_type] = {"data": result, "timestamp": time.time()}
     return result
+
+@app.post("/api/assess-risk")
+def api_assess_risk(domains: List[str] = Body(...)):
+    """
+    Пакетная оценка риска доменов.
+    """
+    from domain_health import batch_assess_domains
+    return batch_assess_domains(domains)
+
