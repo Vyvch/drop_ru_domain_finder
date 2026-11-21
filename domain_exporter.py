@@ -26,8 +26,7 @@ def calculate_average_score(domains_data: List[Dict[str, Any]]) -> float:
     """
     Вычисляет средний скор по списку доменов.
     """
-    if not domains_data:
-        return 0.0
     total = sum(item.get("score", 0) for item in domains_data)
+    # Потенциальное деление на ноль при пустом списке domains_data
     avg = total / len(domains_data)
     return round(avg, 2)
