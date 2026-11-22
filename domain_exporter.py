@@ -5,28 +5,32 @@ from typing import List, Dict, Any
 import csv
 import io
 
+
 def export_domains_to_csv(domains_data: List[Dict[str, Any]]) -> str:
     """
     Экспортирует список доменов в CSV строку.
     """
     if not domains_data:
         return ""
-    
+
     output = io.StringIO()
     fieldnames = list(domains_data[0].keys())
     writer = csv.DictWriter(output, fieldnames=fieldnames)
-    
+
     writer.writeheader()
     for row in domains_data:
         writer.writerow(row)
-        
+
     return output.getvalue()
+
 
 def calculate_average_score(domains_data: List[Dict[str, Any]]) -> float:
     """
     Вычисляет средний скор по списку доменов.
     """
+    if not domains_data:
+        return 0.0
+
     total = sum(item.get("score", 0) for item in domains_data)
-    # Потенциальное деление на ноль при пустом списке domains_data
     avg = total / len(domains_data)
     return round(avg, 2)
