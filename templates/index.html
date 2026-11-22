@@ -128,8 +128,20 @@
         .domain-card:hover .copy-btn-inline {
             opacity: 1;
         }
+        /* Hidden elements and Search Error */
+        [hidden], .hidden, #search-error[hidden] {
+            display: none !important;
+        }
+        #search-error:not([hidden]) {
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+        }
         /* Slide-over Drawer (440px wide) */
-        .domain-dialog {
+        dialog.domain-dialog:not([open]) {
+            display: none !important;
+        }
+        dialog.domain-dialog[open] {
             position: fixed;
             top: 0;
             right: 0;
@@ -144,11 +156,12 @@
             background: #FFFFFF;
             border: none;
             border-left: 1px solid var(--border-color);
-            display: flex;
+            display: flex !important;
             flex-direction: column;
             z-index: 70;
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.08) !important;
         }
-        .domain-dialog::backdrop {
+        dialog.domain-dialog::backdrop {
             background: rgba(9, 9, 11, 0.25);
         }
         .domain-dialog-body {
@@ -318,7 +331,7 @@
                     </div>
 
                     <!-- Сообщение об ошибке валидации RE2 -->
-                    <div id="search-error" class="search-error text-xs text-error-red bg-red-50 border border-red-200 px-3 py-1.5 rounded-[4px] flex items-center justify-between font-mono" role="alert" aria-live="polite" hidden></div>
+                    <div id="search-error" class="search-error text-xs text-error-red bg-red-50 border border-red-200 px-3 py-1.5 rounded-[4px] font-mono" role="alert" aria-live="polite" hidden style="display: none;"></div>
 
                     <!-- Компактные кликабельные чипсы-пресеты регулярок + кнопки фильтров -->
                     <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -995,6 +1008,7 @@
             if (el) {
                 el.textContent = message;
                 el.hidden = false;
+                el.style.display = 'flex';
             }
             const inp = document.getElementById('search-input');
             if (inp) {
@@ -1013,6 +1027,7 @@
             if (el) {
                 el.textContent = '';
                 el.hidden = true;
+                el.style.display = 'none';
             }
             const inp = document.getElementById('search-input');
             if (inp) {
@@ -1215,9 +1230,21 @@
             domainDialog.showModal();
         }
 
-        domainDialog.querySelector('.domain-dialog-close').addEventListener('click', () => domainDialog.close());
+        const closeBtn = domainDialog.querySelector('.domain-dialog-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                domainDialog.close();
+            });
+        }
         domainDialog.addEventListener('click', event => {
             if (event.target === domainDialog) domainDialog.close();
+        });
+        window.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && domainDialog.open) {
+                domainDialog.close();
+            }
         });
 
         function jumpToPage() {
