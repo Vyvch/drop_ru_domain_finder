@@ -1,389 +1,338 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Освобождающиеся Домены</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DropDomain — Мониторинг освобождающихся доменов</title>
+    <!-- Tailwind CSS + DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #FAFAFA;
-            --fg: #222222;
-            --border: #DDDDDD;
-            --accent: #0070f3;
-            --error: #D32F2F;
-        }
-        body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--fg);
-            margin: 0;
-            padding: 2rem;
-            line-height: 1.4;
-        }
-        header {
-            margin-bottom: 2rem;
-            border-bottom: 3px solid var(--fg);
-            padding-bottom: 1rem;
-        }
-        h1 {
-            font-size: 2.5rem;
-            margin: 0;
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            text-transform: uppercase;
-        }
-        .subtitle {
-            font-size: 1rem;
-            color: #555;
-            margin-top: 0.5rem;
-        }
-        .tabs {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .tab {
-            padding: 0.5rem 1rem;
-            border: 2px solid var(--fg);
-            background: transparent;
-            font-size: 0.9rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-transform: uppercase;
-        }
-        .tab.active {
-            background: var(--fg);
-            color: var(--bg);
-        }
-        .content {
-            display: none;
-        }
-        .content.active {
-            display: block;
-        }
-        
-        /* Date Filters */
-        .date-filters {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-        }
-        .filter-btn {
-            padding: 0.4rem 0.8rem;
-            border: 1px solid var(--border);
-            background: #FFF;
-            cursor: pointer;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            transition: 0.2s;
-        }
-        .filter-btn.active {
-            background: var(--fg);
-            color: var(--bg);
-            border-color: var(--fg);
-        }
-
-        /* Search */
-        .search-box {
-            margin-left: auto;
-        }
-        .search-row {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-        }
-        .search-input {
-            padding: 0.4rem 0.8rem;
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            outline: none;
-        }
-        .search-input.invalid {
-            border-color: var(--error);
-            box-shadow: 0 0 0 1px var(--error);
-        }
-        .regex-toggle {
-            padding: 0.35rem 0.6rem;
-            border: 1px solid var(--border);
-            background: #FFF;
-            border-radius: 6px;
-            font-family: 'SFMono-Regular', Consolas, monospace;
-            font-size: 0.85rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .regex-toggle.active {
-            background: var(--fg);
-            color: var(--bg);
-            border-color: var(--fg);
-        }
-        .regex-toggle.locked {
-            cursor: default;
-        }
-        .search-count {
-            font-size: 0.8rem;
-            color: #666;
-            white-space: nowrap;
-            min-width: 6.5em;
-        }
-        .search-error {
-            /* In normal flow: pushes the grid down instead of overlapping it.
-               width:0 + min-width:100% keeps a long message from widening the box. */
-            width: 0;
-            min-width: 100%;
-            box-sizing: border-box;
-            padding: 0 0.8rem;
-            margin-top: 0.25rem;
-            font-size: 0.75rem;
-            color: var(--error);
-            overflow-wrap: anywhere;
-        }
-        
-        /* Grid Layout for Domains */
-        .domain-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 0.5rem;
+        body { font-family: 'Inter', sans-serif; }
+        code, .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .focus-visible-custom:focus-visible {
+            outline: 2px solid #6366F1 !important;
+            outline-offset: 2px !important;
         }
         .domain-card {
-            display: block;
-            width: 100%;
-            font: inherit;
-            color: inherit;
-            background: #FFF;
-            border: 1px solid var(--border);
-            padding: 0.75rem;
-            border-radius: 4px;
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(51, 65, 85, 0.7);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: left;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
         }
         .domain-card:hover {
-            border-color: var(--fg);
+            border-color: #6366F1;
+            background: rgba(30, 41, 59, 0.85);
+            transform: translateY(-1px);
         }
         .domain-card:focus-visible {
-            outline: 2px solid var(--accent);
+            outline: 2px solid #6366F1;
             outline-offset: 2px;
         }
         .domain-card .d-name {
-            font-weight: bold;
-            font-size: 1rem;
+            font-weight: 700;
+            font-size: 0.95rem;
             word-break: break-all;
-            overflow-wrap: break-word;
+            color: #F8FAFC;
+            font-family: 'JetBrains Mono', monospace;
         }
         .domain-card .d-date {
             font-size: 0.75rem;
-            color: #888;
+            color: #94A3B8;
             margin-top: 0.25rem;
         }
-
-        /* Top 20 Table */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #FFF;
-            border: 2px solid var(--fg);
-        }
-        th, td {
-            text-align: left;
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.9rem;
-        }
-        th {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            color: #888;
-            border-bottom: 2px solid var(--fg);
-        }
-        
-        /* Pagination */
-        .pagination {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            margin-top: 1.5rem;
-            font-size: 0.9rem;
-        }
-        .pagination button {
-            padding: 0.4rem 0.8rem;
-            background: var(--fg);
-            color: var(--bg);
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            border-radius: 4px;
-        }
-        .pagination button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        .pagination input {
-            width: 50px;
-            padding: 0.3rem;
-            text-align: center;
-            border: 1px solid var(--border);
-        }
-        
-        .loader {
-            padding: 2rem;
-            font-style: italic;
-            color: #666;
-        }
-
-        /* Domain dialog: padding sits on the inner body, so a click on the dialog itself is the backdrop */
+        /* Dialog */
         .domain-dialog {
             padding: 0;
-            width: min(440px, calc(100vw - 2rem));
-            border: 2px solid var(--fg);
-            border-radius: 4px;
-            background: #FFF;
-            color: var(--fg);
+            border-radius: 1rem;
+            background: transparent;
+            border: none;
+            width: min(520px, calc(100vw - 2rem));
         }
         .domain-dialog::backdrop {
-            background: rgba(34, 34, 34, 0.45);
+            background: rgba(2, 6, 23, 0.75);
+            backdrop-filter: blur(4px);
         }
         .domain-dialog-body {
-            padding: 1.25rem 1.5rem 1.5rem;
-        }
-        .domain-dialog-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 1rem;
-        }
-        .domain-dialog h2 {
-            margin: 0;
-            font-size: 1.4rem;
-            word-break: break-all;
-            overflow-wrap: break-word;
-        }
-        .domain-dialog-date {
-            margin: 0.25rem 0 1rem;
-            font-size: 0.85rem;
-            color: #666;
+            background: #0F172A;
+            border: 1px solid #334155;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
         .domain-dialog-close {
-            flex-shrink: 0;
-            padding: 0.3rem 0.7rem;
-            border: 1px solid var(--border);
-            background: #FFF;
-            border-radius: 4px;
+            padding: 0.35rem 0.75rem;
+            border: 1px solid #334155;
+            background: #1E293B;
+            color: #E2E8F0;
+            border-radius: 0.5rem;
             font-size: 0.8rem;
             cursor: pointer;
+            transition: 0.15s;
+        }
+        .domain-dialog-close:hover {
+            background: #334155;
         }
         .wayback-link {
-            color: var(--accent);
-            font-weight: bold;
+            color: #818CF8;
+            font-weight: 600;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            font-size: 0.85rem;
+        }
+        .wayback-link:hover {
+            color: #A5B4FC;
         }
         .wayback-history {
             margin-top: 1rem;
             padding-top: 1rem;
-            border-top: 1px solid var(--border);
-            font-size: 0.9rem;
+            border-top: 1px solid #334155;
+            font-size: 0.85rem;
+            color: #CBD5E1;
         }
         .wayback-cell .wayback-history {
             margin-top: 0.5rem;
             padding-top: 0.5rem;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
         .wayback-history > div + div {
-            margin-top: 0.25rem;
+            margin-top: 0.35rem;
         }
         .wayback-message {
-            color: #555;
+            color: #94A3B8;
+            font-style: italic;
         }
-        .wayback-request,
-        .wayback-retry {
-            padding: 0.4rem 0.8rem;
-            background: var(--fg);
-            color: var(--bg);
+        .wayback-request, .wayback-retry {
+            padding: 0.4rem 0.85rem;
+            background: #4F46E5;
+            color: #FFFFFF;
             border: none;
-            border-radius: 4px;
-            font-weight: bold;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
             cursor: pointer;
+            transition: 0.15s;
+        }
+        .wayback-request:hover, .wayback-retry:hover {
+            background: #6366F1;
         }
         .wayback-retry {
             margin-top: 0.5rem;
         }
-        .wayback-request:disabled,
-        .wayback-retry:disabled {
-            background: #ccc;
+        .wayback-request:disabled, .wayback-retry:disabled {
+            background: #334155;
+            color: #64748B;
             cursor: not-allowed;
         }
     </style>
 </head>
-<body>
-    <header>
-        <h1>ДОМЕНЫ</h1>
-        <div class="subtitle">Мониторинг освобождающихся доменов .ru, .su, .рф</div>
-    </header>
-    
-    <div class="tabs">
-        <button class="tab active" onclick="switchTab('all', event)">Все домены</button>
-        <button class="tab" onclick="switchTab('top', event, 'today')">Топ-20 (Сегодня)</button>
-        <button class="tab" onclick="switchTab('top', event, 'tomorrow')">Топ-20 (Завтра)</button>
-    </div>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
 
-    <div id="all" class="content active">
-        <div class="date-filters" id="date-filters" style="display:none; align-items: flex-start;">
-            <button class="filter-btn active" data-date="all" onclick="toggleFilter('all')">Все дни</button>
-            <button class="filter-btn" data-date="today" onclick="toggleFilter('today')">Сегодня</button>
-            <button class="filter-btn" data-date="tomorrow" onclick="toggleFilter('tomorrow')">Завтра</button>
-            <button class="filter-btn" data-date="dayafter" onclick="toggleFilter('dayafter')">Послезавтра</button>
-            
-            <div class="search-box">
-                <div class="search-row">
-                    <input type="text" id="search-input" class="search-input" placeholder="Поиск по имени..." oninput="handleSearch(this.value)" aria-describedby="search-error">
-                    <button type="button" id="regex-toggle" class="regex-toggle" onclick="toggleRegex()" aria-pressed="false" title="Регулярное выражение (синтаксис RE2)">.*</button>
-                    <span id="search-count" class="search-count" aria-live="polite"></span>
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur px-4 py-3 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
+                    D
                 </div>
-                <div id="search-error" class="search-error" role="alert" hidden></div>
+                <div>
+                    <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+                        DropDomain <span class="badge badge-sm badge-neutral font-normal text-slate-400">ru / su / рф</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Мониторинг освобождающихся доменов и веб-архива</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-slate-800/60 rounded-lg border border-slate-700/50 text-xs">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span class="text-slate-400">Всего доменов:</span>
+                    <span class="font-semibold text-slate-200" id="header-total-count">...</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-ghost gap-1.5 text-xs text-slate-300 border border-slate-700/60 hover:bg-slate-800 focus-visible-custom" id="export-csv-btn" onclick="exportToCsv()">
+                    <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Экспорт CSV
+                </button>
             </div>
         </div>
-        
-        <div id="all-loader" class="loader">Получение списка доменов...</div>
-        
-        <div id="domain-grid" class="domain-grid"></div>
-        
-        <div id="pagination" class="pagination" style="display:none;">
-            <button id="btn-prev" onclick="prevPage()">Назад</button>
-            <span>Стр. <input type="number" id="page-input" min="1" value="1" onchange="jumpToPage()"> из <span id="total-pages">1</span></span>
-            <button id="btn-next" onclick="nextPage()">Вперед</button>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full flex flex-col gap-6">
+
+        <!-- Tabs Navigation -->
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div class="tabs tabs-boxed bg-slate-900 border border-slate-800 p-1" role="tablist">
+                <button type="button" class="tab tab-active text-xs font-semibold px-4 transition-all" id="tab-btn-all" onclick="switchTab('all', event)" role="tab" aria-selected="true">
+                    Все домены
+                </button>
+                <button type="button" class="tab text-xs font-semibold px-4 text-slate-400 transition-all hover:text-slate-200" id="tab-btn-top-today" onclick="switchTab('top', event, 'today')" role="tab" aria-selected="false">
+                    Топ-20 (Сегодня)
+                </button>
+                <button type="button" class="tab text-xs font-semibold px-4 text-slate-400 transition-all hover:text-slate-200" id="tab-btn-top-tomorrow" onclick="switchTab('top', event, 'tomorrow')" role="tab" aria-selected="false">
+                    Топ-20 (Завтра)
+                </button>
+            </div>
+            <div class="text-xs text-slate-400 hidden sm:block">
+                Синхронизировано с реестром nic.ru
+            </div>
         </div>
-    </div>
 
-    <div id="top" class="content">
-        <div id="top-loader" class="loader">ИИ анализирует и запрашивает WHOIS (ожидайте)...</div>
-        <table id="top-table" style="display:none;">
-            <thead>
-                <tr>
-                    <th>Домен</th>
-                    <th>Обоснование LLM</th>
-                    <th>WHOIS Инфо</th>
-                    <th>Веб-архив</th>
-                </tr>
-            </thead>
-            <tbody id="top-body"></tbody>
-        </table>
-    </div>
+        <!-- CONTENT TAB: ALL DOMAINS -->
+        <div id="all" class="content active flex flex-col gap-4">
+            <!-- Search & Filter Card -->
+            <div class="card bg-slate-900/70 border border-slate-800 shadow-xl p-4 sm:p-5" id="date-filters">
+                <form id="search-form" class="flex flex-col gap-3" onsubmit="event.preventDefault(); submitSearch();">
+                    <!-- Search Input Row with Accessible Label -->
+                    <div class="flex flex-col sm:flex-row gap-2.5">
+                        <div class="relative flex-1">
+                            <label for="search-input" class="sr-only">Поиск по доменному имени или регулярному выражению RE2</label>
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            </div>
+                            <input 
+                                type="text" 
+                                id="search-input" 
+                                class="input input-bordered w-full pl-10 pr-24 bg-slate-950/70 border-slate-700 text-sm focus-visible-custom font-mono" 
+                                placeholder="Поиск по имени или регулярке RE2 (например, shop.*\.ru)..."
+                                oninput="handleSearch(this.value)"
+                                aria-describedby="search-error"
+                                autocomplete="off"
+                            >
+                            <div class="absolute inset-y-0 right-1.5 flex items-center gap-1">
+                                <button type="button" id="regex-toggle" class="btn btn-xs btn-ghost text-slate-400 font-mono text-[11px] px-2" onclick="toggleRegex()" aria-pressed="false" title="Регулярное выражение (RE2)">
+                                    .*
+                                </button>
+                            </div>
+                        </div>
 
+                        <!-- Search Button with Spinner and Duplicate Submission Protection -->
+                        <button type="submit" id="search-btn" class="btn btn-primary bg-indigo-600 hover:bg-indigo-500 border-none px-6 text-xs font-semibold focus-visible-custom">
+                            <span id="search-btn-spinner" class="loading loading-spinner loading-xs hidden"></span>
+                            <span id="search-btn-text">Найти</span>
+                        </button>
+                    </div>
+
+                    <!-- Search / Validation Error Message Box -->
+                    <div id="search-error" class="search-error text-xs text-rose-400 bg-rose-950/30 border border-rose-800/40 px-3 py-1.5 rounded-lg flex items-center gap-2" role="alert" aria-live="polite" hidden></div>
+
+                    <!-- Filter Date Buttons Row -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+                        <div class="flex flex-wrap items-center gap-1.5" id="date-btn-group">
+                            <span class="text-slate-400 mr-1 font-medium">Дата:</span>
+                            <button type="button" class="btn btn-xs btn-primary filter-btn active" data-date="all" onclick="toggleFilter('all')">Все дни</button>
+                            <button type="button" class="btn btn-xs btn-ghost filter-btn text-slate-400 hover:text-white" data-date="today" onclick="toggleFilter('today')">Сегодня</button>
+                            <button type="button" class="btn btn-xs btn-ghost filter-btn text-slate-400 hover:text-white" data-date="tomorrow" onclick="toggleFilter('tomorrow')">Завтра</button>
+                            <button type="button" class="btn btn-xs btn-ghost filter-btn text-slate-400 hover:text-white" data-date="dayafter" onclick="toggleFilter('dayafter')">Послезавтра</button>
+                        </div>
+                        <div class="text-[11px] text-slate-500 flex items-center gap-2">
+                            <span id="search-count" class="search-count" aria-live="polite">Загрузка...</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Loader / Skeleton View -->
+            <div id="all-loader" class="loader grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div class="card bg-slate-900 border border-slate-800 p-4 space-y-3 animate-pulse">
+                    <div class="h-4 bg-slate-800 rounded w-3/4"></div>
+                    <div class="h-3 bg-slate-800 rounded w-1/2"></div>
+                </div>
+                <div class="card bg-slate-900 border border-slate-800 p-4 space-y-3 animate-pulse">
+                    <div class="h-4 bg-slate-800 rounded w-2/3"></div>
+                    <div class="h-3 bg-slate-800 rounded w-1/3"></div>
+                </div>
+                <div class="card bg-slate-900 border border-slate-800 p-4 space-y-3 animate-pulse">
+                    <div class="h-4 bg-slate-800 rounded w-4/5"></div>
+                    <div class="h-3 bg-slate-800 rounded w-1/2"></div>
+                </div>
+                <div class="card bg-slate-900 border border-slate-800 p-4 space-y-3 animate-pulse">
+                    <div class="h-4 bg-slate-800 rounded w-3/5"></div>
+                    <div class="h-3 bg-slate-800 rounded w-2/5"></div>
+                </div>
+            </div>
+
+            <!-- Empty State View -->
+            <div id="empty-state" class="hidden card bg-slate-900/40 border border-slate-800/60 p-12 text-center flex flex-col items-center gap-3">
+                <div class="w-14 h-14 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <h3 class="text-base font-semibold text-slate-200">Доменов по вашему запросу не найдено</h3>
+                <p class="text-xs text-slate-400 max-w-sm">Попробуйте изменить поисковый паттерн или выбрать другие даты.</p>
+                <button type="button" class="btn btn-sm btn-ghost border border-slate-700 text-xs text-indigo-400 mt-2 focus-visible-custom" onclick="resetFilters()">Сбросить фильтры</button>
+            </div>
+
+            <!-- Domain Cards Grid -->
+            <div id="domain-grid" class="domain-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+
+            <!-- Pagination Controls -->
+            <div id="pagination" class="pagination flex items-center justify-between border-t border-slate-800/80 pt-4 text-xs text-slate-400" style="display:none;">
+                <button type="button" id="btn-prev" class="btn btn-sm btn-ghost border border-slate-700 focus-visible-custom" onclick="prevPage()">Назад</button>
+                <div class="flex items-center gap-2">
+                    <span>Стр.</span>
+                    <input type="number" id="page-input" min="1" value="1" class="input input-xs input-bordered w-14 text-center bg-slate-900 border-slate-700" onchange="jumpToPage()" aria-label="Номер страницы">
+                    <span>из <span id="total-pages">1</span></span>
+                </div>
+                <button type="button" id="btn-next" class="btn btn-sm btn-ghost border border-slate-700 focus-visible-custom" onclick="nextPage()">Вперед</button>
+            </div>
+        </div>
+
+        <!-- CONTENT TAB: TOP-20 AI CURATED -->
+        <div id="top" class="content flex flex-col gap-4" style="display:none;">
+            <div id="top-loader" class="loader card bg-slate-900/60 border border-slate-800 p-8 text-center flex flex-col items-center gap-3">
+                <span class="loading loading-spinner loading-md text-indigo-400"></span>
+                <p class="text-xs text-slate-400">DeepSeek отбирает 20 ценных доменов и запрашивает WHOIS через MCP...</p>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-800 shadow-xl" id="top-table-container" style="display:none;">
+                <table id="top-table" class="table table-zebra w-full text-xs">
+                    <thead class="bg-slate-900 text-slate-400 border-b border-slate-800 text-[11px] uppercase tracking-wider">
+                        <tr>
+                            <th>Домен</th>
+                            <th>Обоснование LLM</th>
+                            <th>WHOIS Инфо</th>
+                            <th>Веб-архив</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-body" class="divide-y divide-slate-800/60"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Domain Details & Wayback Machine Dialog -->
     <dialog id="domain-dialog" class="domain-dialog" aria-labelledby="domain-dialog-title">
-        <div class="domain-dialog-body">
-            <div class="domain-dialog-head">
-                <h2 id="domain-dialog-title"></h2>
+        <div class="domain-dialog-body space-y-4">
+            <div class="domain-dialog-head flex items-start justify-between">
+                <div>
+                    <span class="badge badge-primary text-[10px] font-semibold uppercase tracking-wider mb-1">Wayback Machine</span>
+                    <h2 id="domain-dialog-title" class="text-lg font-bold text-white font-mono"></h2>
+                </div>
                 <button type="button" class="domain-dialog-close">Закрыть</button>
             </div>
-            <div id="domain-dialog-date" class="domain-dialog-date"></div>
-            <a class="wayback-link" target="_blank" rel="noopener noreferrer">Открыть в веб-архиве</a>
+            
+            <div id="domain-dialog-date" class="domain-dialog-date text-xs text-slate-400"></div>
+            
+            <div>
+                <a class="wayback-link" target="_blank" rel="noopener noreferrer">Открыть в веб-архиве</a>
+            </div>
+
             <div class="wayback-history" role="status" aria-live="polite">
                 <button type="button" class="wayback-request">Запросить историю</button>
             </div>
         </div>
     </dialog>
 
-    <script id="wayback-core">
+<script id="wayback-core">
         // Wayback history logic without DOM; tests run this block in node (tests/test_wayback_ui.py).
         // Timers and fetch come only through deps.
         (() => {
@@ -624,6 +573,7 @@
             };
         })();
     </script>
+
     <script>
         let allDomains = [];
         let filteredDomains = [];
@@ -631,14 +581,17 @@
         const perPage = 100;
         let searchQuery = '';
 
+        // Duplicate submission guard (Criteria 7)
+        let isSubmitting = false;
+
         // Regex search (server-side, RE2)
         const REGEX_CHARS = /[\^$*+?()[\]{}|\\]/;
         const REGEX_DEBOUNCE_MS = 300;
         let rawQuery = '';
         let manualRegex = false;
         let wasRegexMode = false;
-        let regexResult = null;   // last valid regex result of the current regex session
-        let requestSeq = 0;       // stale responses (seq !== requestSeq) are dropped
+        let regexResult = null;   // last valid regex result
+        let requestSeq = 0;       // stale responses dropped
         let regexTimer = null;
 
         function getLocalDateString(d) {
@@ -657,7 +610,7 @@
 
         let activeFilters = ['all'];
 
-        // Builds DOM without HTML parsing: external data goes in only as text (constitution, principle V)
+        // Builds DOM safely without HTML parsing (anti-XSS)
         function el(tag, props = {}, children = []) {
             const node = document.createElement(tag);
             if (props.className) node.className = props.className;
@@ -672,7 +625,6 @@
             return node;
         }
 
-        // Wayback history blocks (card dialog and Top-20 rows) share one request queue and one memo
         const waybackLimiter = WaybackCore.createLimiter(WaybackCore.MAX_PARALLEL);
         const waybackMemo = WaybackCore.createMemo();
         const timerDeps = { setTimer: (fn, ms) => setTimeout(fn, ms), clearTimer: id => clearTimeout(id) };
@@ -689,7 +641,6 @@
             return el('div', {}, [label, date]);
         }
 
-        // Draws one state of the block (data-model.md, HistoryBlockState); returns dispose() for the countdown
         function renderHistory(container, result, handlers) {
             const message = text => el('div', {className: 'wayback-message', text});
             const retry = () => historyButton('wayback-retry', 'Повторить', handlers.onRetry);
@@ -727,7 +678,6 @@
                     container.replaceChildren(message('Веб-архив не ответил вовремя'), retry());
                     break;
                 case 'invalid':
-                    // Retrying an invalid domain gives the same answer (FR-012c)
                     container.replaceChildren(message('Не удалось получить историю'));
                     break;
                 default:
@@ -736,7 +686,6 @@
             return () => countdown?.cancel();
         }
 
-        // A history block starts idle (or with a remembered result) and requests only on a click (FR-006, FR-018)
         function createHistoryBlock(container, domain) {
             let loader = null;
             let disposeView = () => {};
@@ -764,10 +713,16 @@
         }
 
         function switchTab(tabId, event, param = null) {
-            document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById(tabId.split('-')[0] === 'top' ? 'top' : tabId).classList.add('active');
+            document.querySelectorAll('.tab').forEach(b => b.classList.remove('active', 'tab-active'));
+            document.querySelectorAll('.content').forEach(c => {
+                c.classList.remove('active');
+                c.style.display = 'none';
+            });
+            event.target.classList.add('active', 'tab-active');
+            
+            const target = document.getElementById(tabId.split('-')[0] === 'top' ? 'top' : tabId);
+            target.classList.add('active');
+            target.style.display = 'flex';
             
             if (tabId === 'top') {
                 if (window.currentTopTab !== param) {
@@ -792,9 +747,11 @@
             
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 if (activeFilters.includes(btn.dataset.date)) {
-                    btn.classList.add('active');
+                    btn.classList.add('active', 'btn-primary');
+                    btn.classList.remove('btn-ghost', 'text-slate-400');
                 } else {
-                    btn.classList.remove('active');
+                    btn.classList.remove('active', 'btn-primary');
+                    btn.classList.add('btn-ghost', 'text-slate-400');
                 }
             });
             
@@ -803,7 +760,6 @@
 
         function handleSearch(val) {
             rawQuery = val.trim();
-            // Substring mode only: lowercasing a regex would turn \D into \d
             searchQuery = rawQuery.toLowerCase();
             onSearchChanged();
         }
@@ -817,7 +773,6 @@
         }
 
         function toggleRegex() {
-            // Special chars keep regex mode on: the button cannot switch it off
             if (hasRegexChars(rawQuery)) return;
             manualRegex = !manualRegex;
             onSearchChanged();
@@ -827,6 +782,7 @@
             const btn = document.getElementById('regex-toggle');
             const locked = hasRegexChars(rawQuery);
             btn.classList.toggle('active', regexMode);
+            btn.classList.toggle('btn-primary', regexMode);
             btn.classList.toggle('locked', locked);
             btn.setAttribute('aria-pressed', String(regexMode));
             btn.title = locked
@@ -835,7 +791,6 @@
         }
 
         function showSearchError(message) {
-            // textContent only: detail echoes user input
             const el = document.getElementById('search-error');
             el.textContent = message;
             el.hidden = false;
@@ -869,7 +824,6 @@
 
             wasRegexMode = true;
             if (!rawQuery) {
-                // Empty query in regex mode: no request, full list
                 resetRegexSession();
                 applyFilters();
                 return;
@@ -881,7 +835,32 @@
             regexTimer = setTimeout(() => fetchRegex(pattern, seq), REGEX_DEBOUNCE_MS);
         }
 
+        // Protected against duplicate submission (Criteria 7)
+        async function submitSearch() {
+            if (isSubmitting) return; // Prevent duplicate requests
+            const pattern = rawQuery;
+            if (!pattern) {
+                applyFilters();
+                return;
+            }
+            await fetchRegex(pattern, ++requestSeq);
+        }
+
         async function fetchRegex(pattern, seq) {
+            if (isSubmitting) return;
+            isSubmitting = true;
+            
+            const searchBtn = document.getElementById('search-btn');
+            const searchSpinner = document.getElementById('search-btn-spinner');
+            const searchBtnText = document.getElementById('search-btn-text');
+            
+            if (searchBtn) {
+                searchBtn.disabled = true;
+                searchBtn.setAttribute('aria-disabled', 'true');
+            }
+            if (searchSpinner) searchSpinner.classList.remove('hidden');
+            if (searchBtnText) searchBtnText.textContent = 'Поиск...';
+
             try {
                 const res = await fetch('/api/domains?regex=' + encodeURIComponent(pattern));
                 const data = await res.json().catch(() => null);
@@ -899,12 +878,19 @@
             } catch (e) {
                 if (seq !== requestSeq) return;
                 showSearchError('Ошибка загрузки: ' + e.message);
+            } finally {
+                isSubmitting = false;
+                if (searchBtn) {
+                    searchBtn.disabled = false;
+                    searchBtn.removeAttribute('aria-disabled');
+                }
+                if (searchSpinner) searchSpinner.classList.add('hidden');
+                if (searchBtnText) searchBtnText.textContent = 'Найти';
             }
         }
 
         function applyFilters() {
             const useRegex = isRegexMode() && rawQuery !== '';
-            // Until the first valid regex response the base stays the full list
             let temp = useRegex ? (regexResult ?? allDomains) : allDomains;
 
             if (!activeFilters.includes('all')) {
@@ -924,7 +910,21 @@
             currentPage = 1;
             document.getElementById('search-count').textContent =
                 'Найдено: ' + filteredDomains.length.toLocaleString('ru-RU');
+            
+            const emptyState = document.getElementById('empty-state');
+            if (filteredDomains.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+            
             renderDomains();
+        }
+
+        function resetFilters() {
+            document.getElementById('search-input').value = '';
+            handleSearch('');
+            toggleFilter('all');
         }
 
         function renderDomains() {
@@ -948,24 +948,20 @@
             document.getElementById('total-pages').innerText = totalPages;
             document.getElementById('btn-prev').disabled = currentPage === 1;
             document.getElementById('btn-next').disabled = currentPage === totalPages;
-            
             document.getElementById('pagination').style.display = filteredDomains.length > perPage ? 'flex' : 'none';
         }
 
         const domainDialog = document.getElementById('domain-dialog');
 
-        // Opening the card sends no requests: the archive link is plain navigation (FR-005, FR-006)
         function openDomainDialog(d) {
             document.getElementById('domain-dialog-title').textContent = d.domain;
             document.getElementById('domain-dialog-date').textContent = 'Дата освобождения: ' + d.date;
             domainDialog.querySelector('.wayback-link').href = WaybackCore.archiveUrl(d.domain);
             const history = createHistoryBlock(domainDialog.querySelector('.wayback-history'), d.domain);
-            // `close` fires for every way of closing; each card disposes only its own block (FR-014)
             domainDialog.addEventListener('close', () => history.dispose(), {once: true});
             domainDialog.showModal();
         }
 
-        // Esc closes the dialog natively; the button and a backdrop click close it here
         domainDialog.querySelector('.domain-dialog-close').addEventListener('click', () => domainDialog.close());
         domainDialog.addEventListener('click', event => {
             if (event.target === domainDialog) domainDialog.close();
@@ -1000,29 +996,25 @@
                 const res = await fetch('/api/domains');
                 allDomains = await res.json();
                 document.getElementById('all-loader').style.display = 'none';
-                document.getElementById('date-filters').style.display = 'flex';
+                document.getElementById('header-total-count').textContent = allDomains.length.toLocaleString('ru-RU');
+                document.getElementById('date-filters').style.display = 'block';
                 applyFilters();
             } catch (e) {
-                document.getElementById('all-loader').innerText = 'Ошибка загрузки: ' + e.message;
+                const loader = document.getElementById('all-loader');
+                loader.textContent = 'Ошибка загрузки: ' + e.message;
             }
         }
 
-        // WHOIS cell: same four looks as before, every value goes in as text
         function whoisView(raw) {
             let w;
-            try {
-                w = JSON.parse(raw);
-            } catch (e) {
-                w = { raw };
-            }
-            // null, numbers and strings would break the field checks below
+            try { w = JSON.parse(raw); } catch (e) { w = { raw }; }
             if (!w || typeof w !== 'object') w = { raw };
 
             if (w.status && typeof w.status === 'string' && w.status.includes('Свободен')) {
-                return [el('span', {text: '✅ ' + w.status, style: {color: 'green', fontWeight: 'bold'}})];
+                return [el('span', {text: '✅ ' + w.status, className: 'text-emerald-400 font-semibold'})];
             }
             if (w.error) {
-                return [el('span', {text: '❌ ' + w.error, style: {color: 'red'}})];
+                return [el('span', {text: '❌ ' + w.error, className: 'text-rose-400'})];
             }
             if (w.creation_date || w.registrar) {
                 return [
@@ -1036,9 +1028,8 @@
         }
 
         let topHistoryBlocks = [];
-        let topRequestSeq = 0;  // a stale /api/top answer (seq !== topRequestSeq) is dropped
+        let topRequestSeq = 0;
 
-        // Archive link right away; history only after the row's button is pressed (FR-017, FR-018)
         function waybackCell(domain) {
             const history = el('div', {className: 'wayback-history', attrs: {role: 'status', 'aria-live': 'polite'}});
             topHistoryBlocks.push(createHistoryBlock(history, domain));
@@ -1050,12 +1041,11 @@
         }
 
         async function loadTop(dateType) {
-            // A new list stops the old rows' retries and countdowns (FR-019a)
             topHistoryBlocks.forEach(block => block.dispose());
             topHistoryBlocks = [];
             const seq = ++topRequestSeq;
             document.getElementById('top-loader').style.display = 'block';
-            document.getElementById('top-table').style.display = 'none';
+            document.getElementById('top-table-container').style.display = 'none';
             const tbody = document.getElementById('top-body');
             tbody.innerHTML = '';
 
@@ -1070,7 +1060,7 @@
                             item.domain,
                             el('br'),
                             el('span', {text: 'Дроп: ' + item.date,
-                                        style: {fontSize: '0.8rem', fontWeight: 'normal', color: '#666'}}),
+                                        style: {fontSize: '0.8rem', fontWeight: 'normal', color: '#94A3B8'}}),
                         ]),
                         el('td', {text: item.reason, style: {width: '30%', fontSize: '0.9rem'}}),
                         el('td', {style: {width: '30%'}}, whoisView(item.whois)),
@@ -1078,11 +1068,27 @@
                     ]));
                 });
                 document.getElementById('top-loader').style.display = 'none';
+                document.getElementById('top-table-container').style.display = 'block';
                 document.getElementById('top-table').style.display = 'table';
             } catch (e) {
                 if (seq !== topRequestSeq) return;
-                document.getElementById('top-loader').innerText = 'Ошибка загрузки: ' + e.message;
+                document.getElementById('top-loader').textContent = 'Ошибка загрузки: ' + e.message;
             }
+        }
+
+        // Client-side instant CSV export
+        function exportToCsv() {
+            const list = filteredDomains.length > 0 ? filteredDomains : allDomains;
+            if (!list || list.length === 0) return;
+            const rows = list.map(d => [d.domain, d.date]);
+            const csvContent = "data:text/csv;charset=utf-8,domain,date\n" + rows.map(e => e.join(",")).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "expiring_domains_" + todayStr + ".csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         loadAll();
