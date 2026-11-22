@@ -14,8 +14,15 @@ def export_domains_to_csv(domains_data: List[Dict[str, Any]]) -> str:
         return ""
 
     output = io.StringIO()
-    fieldnames = list(domains_data[0].keys())
-    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    fieldnames = list(dict.fromkeys(
+        key for row in domains_data for key in row.keys()
+    ))
+    writer = csv.DictWriter(
+        output,
+        fieldnames=fieldnames,
+        restval="",
+        extrasaction="ignore",
+    )
 
     writer.writeheader()
     for row in domains_data:
