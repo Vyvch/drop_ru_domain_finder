@@ -1432,7 +1432,7 @@
 
         function openDomainDialog(d) {
             document.getElementById('domain-dialog-title').textContent = d.domain;
-            document.getElementById('domain-dialog-date').textContent = 'Дата освобождения: ' + d.date;
+            document.getElementById('domain-dialog-date').textContent = d.date;
             
             let punycode = null;
             if (/[^\x00-\x7F]/.test(d.domain) || d.domain.endsWith('.рф')) {
@@ -1556,11 +1556,16 @@
                 return [el('span', {text: w.error, className: 'text-error-red'})];
             }
             if (w.creation_date || w.registrar) {
+                const created = (w.creation_date || '—').split('T')[0];
+                const isDelegated = w.status && w.status.includes('DELEGATED');
+                const statusText = isDelegated ? 'DELEGATED' : (w.status ? w.status.split(',')[0].trim() : 'REGISTERED');
                 return [
-                    el('strong', {text: 'Регистратор:'}), ' ' + (w.registrar || '?'), el('br'),
-                    el('strong', {text: 'Создан:'}), ' ' + (w.creation_date || '?'), el('br'),
-                    el('strong', {text: 'Истекает:'}), ' ' + (w.expiration_date || '?'), el('br'),
-                    el('small', {}, [el('strong', {text: 'Статус:'}), ' ' + (w.status || '?')]),
+                    el('div', {}, ['Рег: ' + (w.registrar || '—')]),
+                    el('div', {}, ['Создан: ' + created]),
+                    el('div', {className: 'text-success-green flex items-center gap-1 mt-0.5 font-mono'}, [
+                        el('span', {className: 'w-1.5 h-1.5 rounded-full bg-success-green'}),
+                        el('span', {text: statusText})
+                    ])
                 ];
             }
             return [el('pre', {text: JSON.stringify(w, null, 2), style: {fontSize: '0.75rem', overflowX: 'auto'}})];
@@ -1594,10 +1599,15 @@
                 if (seq !== topRequestSeq) return;
 
                 data.forEach(item => {
+                    const parts = item.domain.split('.');
+                    const zone = parts.length > 1 ? '.' + parts.slice(1).join('.') : '';
                     tbody.appendChild(el('tr', {className: 'hover:bg-muted/60 transition-colors'}, [
                         el('td', {className: 'domain-name py-3 px-4 align-top font-mono', style: {width: '22%', wordBreak: 'break-all'}}, [
-                            el('div', {className: 'font-bold text-text', text: item.domain}),
-                            el('div', {className: 'text-[11px] text-text-muted mt-0.5', text: 'Дроп: ' + item.date}),
+                            el('div', {className: 'font-mono text-sm font-bold text-text', text: item.domain}),
+                            el('div', {className: 'flex items-center gap-2 mt-1 text-[11px] font-mono text-text-muted'}, [
+                                el('span', {className: 'px-1.5 py-0.2 rounded border border-muted-border bg-muted', text: zone}),
+                                el('span', {text: item.date}),
+                            ]),
                         ]),
                         el('td', {className: 'py-3 px-4 align-top text-xs text-zinc-700 leading-relaxed', style: {width: '30%'}, text: item.reason}),
                         el('td', {className: 'py-3 px-4 align-top font-mono text-[11px] text-text-muted', style: {width: '30%'}}, whoisView(item.whois)),
