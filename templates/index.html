@@ -268,11 +268,8 @@
             <button type="button" class="tab active tab-active px-3 py-1 rounded-[3px] bg-white text-text font-semibold border border-muted-border transition-all" id="tab-btn-all" onclick="switchTab('all', event)" role="tab" aria-selected="true">
                 Все домены
             </button>
-            <button type="button" class="tab px-3 py-1 rounded-[3px] text-text-muted hover:text-text transition-all" id="tab-btn-top-today" onclick="switchTab('top', event, 'today')" role="tab" aria-selected="false">
-                Топ-20 (Сегодня)
-            </button>
-            <button type="button" class="tab px-3 py-1 rounded-[3px] text-text-muted hover:text-text transition-all" id="tab-btn-top-tomorrow" onclick="switchTab('top', event, 'tomorrow')" role="tab" aria-selected="false">
-                Топ-20 (Завтра)
+            <button type="button" class="tab px-3 py-1 rounded-[3px] text-text-muted hover:text-text transition-all" id="tab-btn-top" onclick="switchTab('top', event)" role="tab" aria-selected="false">
+                Топ-20 от AI
             </button>
         </div>
 
@@ -356,12 +353,22 @@
 
                         <!-- Фильтр дат и зон -->
                         <div class="flex flex-wrap items-center gap-3">
+                            <!-- Фильтр дат освобождения (segmented control) -->
                             <div class="inline-flex rounded-[4px] border border-muted-border bg-muted p-0.5 text-xs font-medium" id="date-btn-group">
                                 <button type="button" class="px-2 py-0.5 rounded-[3px] bg-white text-text font-semibold border border-muted-border filter-btn active" data-date="all" onclick="toggleFilter('all')">Все дни</button>
                                 <button type="button" class="px-2 py-0.5 rounded-[3px] text-text-muted hover:text-text filter-btn" data-date="today" onclick="toggleFilter('today')">Сегодня</button>
                                 <button type="button" class="px-2 py-0.5 rounded-[3px] text-text-muted hover:text-text filter-btn" data-date="tomorrow" onclick="toggleFilter('tomorrow')">Завтра</button>
                                 <button type="button" class="px-2 py-0.5 rounded-[3px] text-text-muted hover:text-text filter-btn" data-date="dayafter" onclick="toggleFilter('dayafter')">Послезавтра</button>
                             </div>
+
+                            <!-- Фильтр зон -->
+                            <div class="inline-flex rounded-[4px] border border-muted-border bg-muted p-0.5 text-xs font-medium font-mono" id="zone-btn-group">
+                                <button type="button" class="px-2 py-0.5 rounded-[3px] bg-white text-text font-semibold border border-muted-border zone-btn active" data-zone="all" onclick="toggleZone('all')">Все</button>
+                                <button type="button" class="px-2 py-0.5 rounded-[3px] text-text-muted hover:text-text zone-btn" data-zone="ru" onclick="toggleZone('ru')">.ru</button>
+                                <button type="button" class="px-2 py-0.5 rounded-[3px] text-text-muted hover:text-text zone-btn" data-zone="su" onclick="toggleZone('su')">.su</button>
+                                <button type="button" class="px-2 py-0.5 rounded-[3px] text-text-muted hover:text-text zone-btn" data-zone="рф" onclick="toggleZone('рф')">.рф</button>
+                            </div>
+
                             <div class="text-[11px] text-text-muted font-mono flex items-center gap-2">
                                 <span id="search-count" class="search-count" aria-live="polite">Загрузка...</span>
                             </div>
@@ -373,9 +380,16 @@
             <!-- Плотная таблица данных (Data Table) -->
             <div class="border border-muted-border rounded-[4px] overflow-hidden bg-white">
                 
-                <!-- Шапка таблицы данных (НЕ th, чтобы не конфликтовать со строгими тестами Top-20) -->
+                <!-- Шапка таблицы данных (с кнопками быстрой перелистывания страниц) -->
                 <div class="grid grid-cols-[minmax(220px,1.8fr)_80px_70px_130px_100px] items-center px-4 py-2 bg-muted border-b border-muted-border text-[11px] font-semibold text-text-muted uppercase tracking-wider select-none">
-                    <div>Домен</div>
+                    <div class="flex items-center gap-3">
+                        <span>Домен</span>
+                        <div class="hidden sm:flex items-center gap-1 font-mono normal-case text-[10px]">
+                            <button type="button" id="btn-prev-top" onclick="prevPage()" class="px-1.5 py-0.2 rounded border border-muted-border bg-white hover:bg-zinc-100 text-text disabled:opacity-40" title="Назад (или стрелка ←)">←</button>
+                            <span><span id="page-current-top">1</span> / <span id="total-pages-top">1</span></span>
+                            <button type="button" id="btn-next-top" onclick="nextPage()" class="px-1.5 py-0.2 rounded border border-muted-border bg-white hover:bg-zinc-100 text-text disabled:opacity-40" title="Вперед (или стрелка →)">→</button>
+                        </div>
+                    </div>
                     <div>Зона</div>
                     <div>Длина</div>
                     <div>Дата освобождения</div>
@@ -413,13 +427,17 @@
 
                 <!-- Pagination Controls -->
                 <div id="pagination" class="pagination flex items-center justify-between px-4 py-2.5 bg-muted border-t border-muted-border text-xs text-text-muted font-mono" style="display:none;">
-                    <button type="button" id="btn-prev" class="px-2.5 py-1 border border-muted-border rounded-[3px] bg-white text-text hover:bg-zinc-50 disabled:opacity-40 focus-visible-custom" onclick="prevPage()">Назад</button>
+                    <button type="button" id="btn-prev" class="px-3 py-1 border border-muted-border rounded-[3px] bg-white text-text hover:bg-zinc-50 disabled:opacity-40 focus-visible-custom flex items-center gap-1 font-medium" onclick="prevPage()">
+                        <span>←</span> <span>Назад</span>
+                    </button>
                     <div class="flex items-center gap-2">
                         <span>Стр.</span>
                         <input type="number" id="page-input" min="1" value="1" class="w-12 text-center py-0.5 px-1 text-xs font-mono border border-muted-border rounded-[3px] bg-white text-text" onchange="jumpToPage()" aria-label="Номер страницы">
-                        <span>из <span id="total-pages">1</span></span>
+                        <span>из <span id="total-pages">1</span> • 25 на стр.</span>
                     </div>
-                    <button type="button" id="btn-next" class="px-2.5 py-1 border border-muted-border rounded-[3px] bg-white text-text hover:bg-zinc-50 disabled:opacity-40 focus-visible-custom" onclick="nextPage()">Вперед</button>
+                    <button type="button" id="btn-next" class="px-3 py-1 border border-muted-border rounded-[3px] bg-white text-text hover:bg-zinc-50 disabled:opacity-40 focus-visible-custom flex items-center gap-1 font-medium" onclick="nextPage()">
+                        <span>Вперед</span> <span>→</span>
+                    </button>
                 </div>
             </div>
 
@@ -427,6 +445,22 @@
 
         <!-- РЕЖИМ 2: ТОП-20 ОТ AI -->
         <div id="top" class="content flex flex-col gap-4" style="display:none;">
+            
+            <!-- Переключатель дня: «На сегодня» / «На завтра» (Segmented Control идентичный макету) -->
+            <div class="flex items-center justify-between pb-1 border-b border-muted-border">
+                <div class="inline-flex rounded-[4px] border border-muted-border bg-muted p-0.5 text-xs font-medium" role="tablist">
+                    <button type="button" id="tab-btn-top-today" onclick="switchTopDay('today', event)" class="tab px-3 py-1 rounded-[3px] bg-white text-text font-semibold border border-muted-border transition-all" role="tab" aria-selected="true">
+                        На сегодня
+                    </button>
+                    <button type="button" id="tab-btn-top-tomorrow" onclick="switchTopDay('tomorrow', event)" class="tab px-3 py-1 rounded-[3px] text-text-muted hover:text-text transition-all" role="tab" aria-selected="false">
+                        На завтра
+                    </button>
+                </div>
+                <div class="text-xs text-text-muted font-mono">
+                    DeepSeek Curation • 20 лучших отобранных доменов
+                </div>
+            </div>
+
             <div id="top-loader" class="loader py-12 px-4 text-center flex flex-col items-center justify-center gap-2 border border-muted-border rounded-[4px] bg-white">
                 <span class="inline-block w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin"></span>
                 <p class="text-xs text-text-muted font-mono">DeepSeek отбирает 20 ценных доменов и запрашивает WHOIS через MCP...</p>
@@ -787,8 +821,9 @@
         let allDomains = [];
         let filteredDomains = [];
         let currentPage = 1;
-        const perPage = 100;
+        const perPage = 25; // 25 доменов на страницу для высокой плотности и удобного чтения
         let searchQuery = '';
+        let activeZone = 'all';
 
         // Duplicate submission guard (Criteria 7)
         let isSubmitting = false;
@@ -818,6 +853,26 @@
         const dayAfterStr = getLocalDateString(dayAfter);
 
         let activeFilters = ['all'];
+
+        // Segmented Control Pill Helper: плавное и видимое перемещение активного квадратика
+        const PILL_ACTIVE = ['bg-white', 'text-text', 'font-semibold', 'border', 'border-muted-border'];
+        const PILL_INACTIVE = ['text-text-muted', 'hover:text-text'];
+
+        function setPillActive(activeBtn, allButtons) {
+            if (!allButtons || allButtons.length === 0) return;
+            allButtons.forEach(btn => {
+                if (!btn) return;
+                if (btn === activeBtn) {
+                    btn.classList.add(...PILL_ACTIVE, 'active', 'tab-active');
+                    btn.classList.remove(...PILL_INACTIVE);
+                    btn.setAttribute('aria-selected', 'true');
+                } else {
+                    btn.classList.remove(...PILL_ACTIVE, 'active', 'tab-active');
+                    btn.classList.add(...PILL_INACTIVE);
+                    btn.setAttribute('aria-selected', 'false');
+                }
+            });
+        }
 
         // Builds DOM safely without HTML parsing (anti-XSS)
         function el(tag, props = {}, children = []) {
@@ -922,27 +977,32 @@
         }
 
         function switchTab(tabId, event, param = null) {
-            document.querySelectorAll('.tab').forEach(b => b.classList.remove('active', 'tab-active'));
-            document.querySelectorAll('.content').forEach(c => {
-                c.classList.remove('active');
-                c.style.display = 'none';
-            });
-            if (event && event.target) {
-                event.target.classList.add('active', 'tab-active');
+            const isTop = (tabId === 'top' || (tabId && tabId.startsWith('top')));
+            const allSec = document.getElementById('all');
+            const topSec = document.getElementById('top');
+            const btnAll = document.getElementById('tab-btn-all');
+            const btnTop = document.getElementById('tab-btn-top');
+
+            if (isTop) {
+                if (allSec) allSec.style.display = 'none';
+                if (topSec) topSec.style.display = 'flex';
+                setPillActive(btnTop, [btnAll, btnTop]);
+
+                const dateType = param || 'today';
+                switchTopDay(dateType);
+            } else {
+                if (allSec) allSec.style.display = 'flex';
+                if (topSec) topSec.style.display = 'none';
+                setPillActive(btnAll, [btnAll, btnTop]);
             }
-            
-            const target = document.getElementById(tabId.split('-')[0] === 'top' ? 'top' : tabId);
-            if (target) {
-                target.classList.add('active');
-                target.style.display = 'flex';
-            }
-            
-            if (tabId === 'top') {
-                if (window.currentTopTab !== param) {
-                    window.currentTopTab = param;
-                    loadTop(param);
-                }
-            }
+        }
+
+        function switchTopDay(dayType, event) {
+            const btnToday = document.getElementById('tab-btn-top-today');
+            const btnTomorrow = document.getElementById('tab-btn-top-tomorrow');
+            const activeBtn = (dayType === 'tomorrow') ? btnTomorrow : btnToday;
+            setPillActive(activeBtn, [btnToday, btnTomorrow]);
+            loadTop(dayType);
         }
 
         function toggleFilter(filter) {
@@ -958,13 +1018,33 @@
                 if (activeFilters.length === 0) activeFilters = ['all'];
             }
             
-            document.querySelectorAll('.filter-btn').forEach(btn => {
+            const dateButtons = Array.from(document.querySelectorAll('#date-btn-group .filter-btn'));
+            dateButtons.forEach(btn => {
                 const isActive = activeFilters.includes(btn.dataset.date);
-                btn.className = isActive 
-                    ? 'px-2 py-0.5 rounded-[3px] bg-white text-text font-semibold border border-muted-border filter-btn active' 
-                    : 'px-2 py-0.5 rounded-[3px] text-text-muted hover:text-text filter-btn';
+                if (isActive) {
+                    btn.classList.add(...PILL_ACTIVE);
+                    btn.classList.remove(...PILL_INACTIVE);
+                } else {
+                    btn.classList.remove(...PILL_ACTIVE);
+                    btn.classList.add(...PILL_INACTIVE);
+                }
             });
             
+            applyFilters();
+        }
+
+        function toggleZone(zone) {
+            activeZone = zone;
+            const zoneButtons = Array.from(document.querySelectorAll('#zone-btn-group .zone-btn'));
+            zoneButtons.forEach(btn => {
+                if (btn.dataset.zone === zone) {
+                    btn.classList.add(...PILL_ACTIVE);
+                    btn.classList.remove(...PILL_INACTIVE);
+                } else {
+                    btn.classList.remove(...PILL_ACTIVE);
+                    btn.classList.add(...PILL_INACTIVE);
+                }
+            });
             applyFilters();
         }
 
@@ -998,6 +1078,9 @@
             btn.classList.toggle('btn-primary', regexMode);
             btn.classList.toggle('locked', locked);
             btn.setAttribute('aria-pressed', String(regexMode));
+            btn.className = regexMode 
+                ? 'px-2 py-0.5 rounded-[3px] text-[11px] font-mono border border-accent bg-accent text-white font-semibold' 
+                : 'px-2 py-0.5 rounded-[3px] text-[11px] font-mono border border-muted-border text-text hover:bg-muted';
             btn.title = locked
                 ? 'Regex включён автоматически: в запросе есть спецсимволы'
                 : 'Регулярное выражение (синтаксис RE2)';
@@ -1138,6 +1221,11 @@
                 });
                 temp = temp.filter(d => targetDates.includes(d.date));
             }
+
+            if (activeZone !== 'all') {
+                const z = '.' + activeZone;
+                temp = temp.filter(d => d.domain.endsWith(z));
+            }
             
             if (!useRegex && searchQuery) {
                 temp = temp.filter(d => d.domain.toLowerCase().includes(searchQuery));
@@ -1165,6 +1253,8 @@
         function resetFilters() {
             document.getElementById('search-input').value = '';
             handleSearch('');
+            activeZone = 'all';
+            toggleZone('all');
             toggleFilter('all');
         }
 
@@ -1204,6 +1294,15 @@
             if (btnPrev) btnPrev.disabled = currentPage === 1;
             const btnNext = document.getElementById('btn-next');
             if (btnNext) btnNext.disabled = currentPage === totalPages;
+
+            const topPrev = document.getElementById('btn-prev-top');
+            if (topPrev) topPrev.disabled = currentPage === 1;
+            const topNext = document.getElementById('btn-next-top');
+            if (topNext) topNext.disabled = currentPage === totalPages;
+            const topCurrent = document.getElementById('page-current-top');
+            if (topCurrent) topCurrent.innerText = currentPage;
+            const topTotal = document.getElementById('total-pages-top');
+            if (topTotal) topTotal.innerText = totalPages;
             
             const pagination = document.getElementById('pagination');
             if (pagination) pagination.style.display = filteredDomains.length > perPage ? 'flex' : 'none';
@@ -1253,6 +1352,7 @@
             if (val >= 1 && val <= totalPages) {
                 currentPage = val;
                 renderDomains();
+                scrollToTable();
             }
         }
 
@@ -1260,6 +1360,7 @@
             if (currentPage > 1) {
                 currentPage--;
                 renderDomains();
+                scrollToTable();
             }
         }
 
@@ -1268,8 +1369,27 @@
             if (currentPage < totalPages) {
                 currentPage++;
                 renderDomains();
+                scrollToTable();
             }
         }
+
+        function scrollToTable() {
+            const el = document.getElementById('domain-grid');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Клавиатурные стрелки ← и → для мгновенного переключения страниц
+        window.addEventListener('keydown', event => {
+            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                return;
+            }
+            if (domainDialog && domainDialog.open) return;
+            if (event.key === 'ArrowLeft') {
+                prevPage();
+            } else if (event.key === 'ArrowRight') {
+                nextPage();
+            }
+        });
 
         async function loadAll() {
             try {
