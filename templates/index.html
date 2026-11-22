@@ -173,15 +173,21 @@
             background: #FFFFFF;
         }
         .domain-dialog-close {
-            padding: 4px 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            padding: 0;
             border: 1px solid var(--border-color);
             background: #FFFFFF;
             color: var(--text-secondary);
             border-radius: 4px;
-            font-size: 11px;
+            font-size: 13px;
             font-family: 'JetBrains Mono', monospace;
             cursor: pointer;
             transition: all 0.12s ease;
+            flex-shrink: 0;
         }
         .domain-dialog-close:hover {
             background: var(--bg-secondary);
@@ -200,6 +206,24 @@
         }
         .wayback-link:hover {
             color: #2563EB;
+        }
+        .domain-dialog .wayback-link {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: #FFFFFF;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.12s ease;
+        }
+        .domain-dialog .wayback-link:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
         }
         .wayback-history {
             margin-top: 12px;
@@ -489,13 +513,19 @@
             
             <!-- Шапка панели: домен крупно, кнопка копирования, прямая ссылка, закрыть -->
             <div class="domain-dialog-head h-[60px] px-6 border-b border-muted-border flex items-center justify-between bg-white shrink-0">
-                <div class="flex items-center gap-2 min-w-0">
-                    <h2 id="domain-dialog-title" class="font-mono text-base font-bold text-text truncate"></h2>
-                    <a id="domain-dialog-direct-link" href="#" target="_blank" rel="noopener noreferrer" class="p-1 rounded-[3px] border border-muted-border hover:bg-muted text-text-muted hover:text-text transition-colors" title="Открыть в новой вкладке">
+                <div class="flex items-center gap-2 min-w-0 pr-3">
+                    <div class="flex flex-col min-w-0">
+                        <h2 id="domain-dialog-title" class="font-mono text-base font-bold text-text truncate"></h2>
+                        <span id="domain-dialog-punycode" class="font-mono text-[10px] text-text-muted truncate hidden"></span>
+                    </div>
+                    <button type="button" onclick="copyCurrentDrawerDomain()" class="p-1.5 rounded-[3px] border border-muted-border hover:bg-muted text-text-muted hover:text-text transition-colors shrink-0" title="Копировать домен">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    </button>
+                    <a id="domain-dialog-direct-link" href="#" target="_blank" rel="noopener noreferrer" class="p-1.5 rounded-[3px] border border-muted-border hover:bg-muted text-text-muted hover:text-text transition-colors shrink-0" title="Открыть в новой вкладке">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </a>
                 </div>
-                <button type="button" class="domain-dialog-close">✕ Закрыть</button>
+                <button type="button" class="domain-dialog-close" title="Закрыть панель">✕</button>
             </div>
 
             <div class="flex-1 overflow-y-auto p-6 space-y-6">
@@ -540,30 +570,33 @@
                 <div class="space-y-3 pt-2">
                     <div class="flex items-center justify-between">
                         <h3 class="text-[11px] font-semibold text-text-muted uppercase tracking-wider font-mono">Карма в Wayback Machine</h3>
-                        <span class="inline-flex items-center gap-1 text-[10px] font-mono text-text-muted">
-                            <span class="w-1.5 h-1.5 rounded-full bg-success-green"></span>
-                            <span>Из кэша</span>
+                        <span id="domain-dialog-cache-badge" class="inline-flex items-center gap-1.5 text-[10px] font-mono text-text-muted">
+                            <span id="domain-dialog-cache-dot" class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
+                            <span id="domain-dialog-cache-status">Не запрошено</span>
                         </span>
                     </div>
 
                     <!-- 3 компактные метрики в ряд -->
                     <div class="grid grid-cols-3 gap-2 text-center">
                         <div class="border border-muted-border rounded-[4px] p-2.5 bg-muted/30">
-                            <div id="domain-dialog-metric-count" class="font-mono text-base font-bold text-text tabular-nums">1 234</div>
+                            <div id="domain-dialog-metric-count" class="font-mono text-base font-bold text-text tabular-nums">—</div>
                             <div class="text-[10px] text-text-muted mt-0.5">Всего снимков</div>
                         </div>
                         <div class="border border-muted-border rounded-[4px] p-2.5 bg-muted/30">
-                            <div id="domain-dialog-metric-first" class="font-mono text-sm font-semibold text-text tabular-nums">2009</div>
+                            <div id="domain-dialog-metric-first" class="font-mono text-sm font-semibold text-text tabular-nums">—</div>
                             <div class="text-[10px] text-text-muted mt-0.5">Первый снимок</div>
                         </div>
                         <div class="border border-muted-border rounded-[4px] p-2.5 bg-muted/30">
-                            <div id="domain-dialog-metric-last" class="font-mono text-sm font-semibold text-text tabular-nums">2026</div>
+                            <div id="domain-dialog-metric-last" class="font-mono text-sm font-semibold text-text tabular-nums">—</div>
                             <div class="text-[10px] text-text-muted mt-0.5">Последний снимок</div>
                         </div>
                     </div>
 
                     <div>
-                        <a class="wayback-link" target="_blank" rel="noopener noreferrer">Открыть в веб-архиве</a>
+                        <a class="wayback-link" target="_blank" rel="noopener noreferrer">
+                            <span>Открыть слепки в Web Archive</span>
+                            <span class="text-text-muted">↗</span>
+                        </a>
                     </div>
 
                     <div class="wayback-history" role="status" aria-live="polite">
@@ -574,6 +607,11 @@
             </div>
         </div>
     </dialog>
+
+    <!-- Toast уведомление о копировании -->
+    <div id="copy-toast" class="hidden fixed bottom-5 right-5 z-50 bg-accent text-white px-3.5 py-2 rounded-[4px] text-xs font-mono shadow-md transition-all">
+        Скопировано
+    </div>
 
 <script id="wayback-core">
         // Wayback history logic without DOM; tests run this block in node (tests/test_wayback_ui.py).
@@ -950,13 +988,14 @@
             return () => countdown?.cancel();
         }
 
-        function createHistoryBlock(container, domain) {
+        function createHistoryBlock(container, domain, onStateChange = null) {
             let loader = null;
             let disposeView = () => {};
 
             function show(result) {
                 disposeView();
                 disposeView = renderHistory(container, result, {onRequest: request, onRetry: request});
+                if (onStateChange) onStateChange(result);
             }
 
             function request() {
@@ -1258,6 +1297,65 @@
             toggleFilter('all');
         }
 
+        function copyText(txt) {
+            if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(txt).catch(() => {});
+            }
+            const toast = document.getElementById('copy-toast');
+            if (toast) {
+                toast.textContent = 'Скопировано: ' + txt;
+                toast.classList.remove('hidden');
+                clearTimeout(toast._timer);
+                toast._timer = setTimeout(() => toast.classList.add('hidden'), 2000);
+            }
+        }
+
+        function copyCurrentDrawerDomain() {
+            const domain = document.getElementById('domain-dialog-title').textContent;
+            if (domain) copyText(domain);
+        }
+
+        function updateDrawerWaybackMetrics(result) {
+            const countEl = document.getElementById('domain-dialog-metric-count');
+            const firstEl = document.getElementById('domain-dialog-metric-first');
+            const lastEl = document.getElementById('domain-dialog-metric-last');
+            const statusEl = document.getElementById('domain-dialog-cache-status');
+            const dotEl = document.getElementById('domain-dialog-cache-dot');
+            if (!countEl || !firstEl || !lastEl) return;
+
+            if (result.kind === 'loading') {
+                countEl.textContent = '...';
+                firstEl.textContent = '...';
+                lastEl.textContent = '...';
+                if (statusEl) statusEl.textContent = 'Запрос в архив...';
+                if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse';
+            } else if (result.kind === 'success') {
+                countEl.textContent = WaybackCore.formatCount(result.count, result.truncated);
+                firstEl.textContent = result.first ? result.first.date.substring(0, 4) : '—';
+                lastEl.textContent = result.last ? result.last.date.substring(0, 4) : '—';
+                if (statusEl) statusEl.textContent = result.cached ? 'Из кэша (0.1с)' : 'Из архива';
+                if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-success-green';
+            } else if (result.kind === 'empty') {
+                countEl.textContent = '0';
+                firstEl.textContent = '—';
+                lastEl.textContent = '—';
+                if (statusEl) statusEl.textContent = 'Нет снимков';
+                if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400';
+            } else if (result.kind === 'idle') {
+                countEl.textContent = '—';
+                firstEl.textContent = '—';
+                lastEl.textContent = '—';
+                if (statusEl) statusEl.textContent = 'Не запрошено';
+                if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400';
+            } else {
+                countEl.textContent = '—';
+                firstEl.textContent = '—';
+                lastEl.textContent = '—';
+                if (statusEl) statusEl.textContent = 'Ошибка архива';
+                if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-danger-red';
+            }
+        }
+
         function renderDomains() {
             const grid = document.getElementById('domain-grid');
             grid.innerHTML = '';
@@ -1269,13 +1367,35 @@
                 const parts = d.domain.split('.');
                 const zone = parts.length > 1 ? '.' + parts.slice(1).join('.') : '';
                 const len = d.domain.length;
+
+                let punycode = null;
+                if (/[^\x00-\x7F]/.test(d.domain) || d.domain.endsWith('.рф')) {
+                    try {
+                        const host = new URL('http://' + d.domain).hostname;
+                        if (host !== d.domain) punycode = host;
+                    } catch (e) {}
+                }
+
+                const nameNodes = [
+                    el('span', {className: 'd-name', text: d.domain})
+                ];
+                if (punycode) {
+                    nameNodes.push(el('span', {className: 'font-mono text-[10px] text-text-muted truncate', text: punycode}));
+                }
+
                 grid.appendChild(el('button', {className: 'domain-card', attrs: {type: 'button', 'data-domain': d.domain, title: 'Открыть инспекцию домена ' + d.domain},
                                                on: {click: () => openDomainDialog(d)}}, [
                     el('div', {className: 'd-col-name flex items-center gap-2 min-w-0'}, [
-                        el('span', {className: 'd-name', text: d.domain}),
+                        el('div', {className: 'flex flex-col min-w-0 text-left'}, nameNodes),
+                        el('span', {
+                            className: 'copy-btn-inline px-1 py-0.5 rounded-[2px] border border-muted-border text-[10px] text-text-muted hover:text-text hover:bg-white transition-opacity',
+                            attrs: {title: 'Копировать домен'},
+                            on: {click: (e) => { e.stopPropagation(); copyText(d.domain); }},
+                            text: 'copy'
+                        }),
                     ]),
                     el('div', {className: 'd-zone', text: zone}),
-                    el('div', {className: 'd-len', text: String(len)}),
+                    el('div', {className: 'd-len', text: len + ' симв.'}),
                     el('div', {className: 'd-date', text: d.date}),
                     el('div', {className: 'd-action', text: 'Инспекция →'}),
                 ]));
@@ -1314,6 +1434,24 @@
             document.getElementById('domain-dialog-title').textContent = d.domain;
             document.getElementById('domain-dialog-date').textContent = 'Дата освобождения: ' + d.date;
             
+            let punycode = null;
+            if (/[^\x00-\x7F]/.test(d.domain) || d.domain.endsWith('.рф')) {
+                try {
+                    const host = new URL('http://' + d.domain).hostname;
+                    if (host !== d.domain) punycode = host;
+                } catch (e) {}
+            }
+            const punyEl = document.getElementById('domain-dialog-punycode');
+            if (punyEl) {
+                if (punycode) {
+                    punyEl.textContent = punycode;
+                    punyEl.classList.remove('hidden');
+                } else {
+                    punyEl.textContent = '';
+                    punyEl.classList.add('hidden');
+                }
+            }
+
             const parts = d.domain.split('.');
             const zone = parts.length > 1 ? '.' + parts.slice(1).join('.') : '';
             const regEl = document.getElementById('domain-dialog-whois-reg');
@@ -1324,7 +1462,7 @@
             if (extLink) extLink.href = 'http://' + d.domain;
 
             domainDialog.querySelector('.wayback-link').href = WaybackCore.archiveUrl(d.domain);
-            const history = createHistoryBlock(domainDialog.querySelector('.wayback-history'), d.domain);
+            const history = createHistoryBlock(domainDialog.querySelector('.wayback-history'), d.domain, updateDrawerWaybackMetrics);
             domainDialog.addEventListener('close', () => history.dispose(), {once: true});
             domainDialog.showModal();
         }
