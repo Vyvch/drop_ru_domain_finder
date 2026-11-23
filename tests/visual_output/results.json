@@ -16,9 +16,9 @@
     "h": 120
   },
   "drawer": {
-    "similarity": 92.50568181818181,
-    "mismatch_ratio": 7.494318181818181,
-    "diff_pixels": 26380,
+    "similarity": 96.79602272727273,
+    "mismatch_ratio": 3.203977272727273,
+    "diff_pixels": 11278,
     "total_pixels": 352000,
     "w": 440,
     "h": 800
