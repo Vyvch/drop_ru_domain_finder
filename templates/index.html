@@ -1427,6 +1427,7 @@
                     nameNodes.push(el('span', {className: 'font-mono text-[10px] text-text-muted truncate', text: punycode}));
                 }
 
+                const cleanDate = (d.date || '').replace(/^Дата освобождения:\s*/i, '').trim();
                 grid.appendChild(el('button', {className: 'domain-card', attrs: {type: 'button', 'data-domain': d.domain, title: 'Открыть инспекцию домена ' + d.domain},
                                                on: {click: () => openDomainDialog(d)}}, [
                     el('div', {className: 'd-col-name flex items-center gap-2 min-w-0'}, [
@@ -1440,7 +1441,7 @@
                     ]),
                     el('div', {className: 'd-zone', text: zone}),
                     el('div', {className: 'd-len', text: len + ' симв.'}),
-                    el('div', {className: 'd-date', text: d.date}),
+                    el('div', {className: 'd-date', text: cleanDate}),
                     el('div', {className: 'd-action', text: 'Инспекция →'}),
                 ]));
             });
@@ -1481,8 +1482,9 @@
                     domainDialog.close();
                 }
 
+                const cleanDate = (d.date || '').replace(/^Дата освобождения:\s*/i, '').trim();
                 document.getElementById('domain-dialog-title').textContent = d.domain;
-                document.getElementById('domain-dialog-date').textContent = d.date;
+                document.getElementById('domain-dialog-date').textContent = cleanDate;
                 
                 let punycode = null;
                 if (/[^\x00-\x7F]/.test(d.domain) || d.domain.endsWith('.рф')) {
@@ -1507,7 +1509,7 @@
                 const regEl = document.getElementById('domain-dialog-whois-reg');
                 if (regEl) regEl.textContent = zone === '.su' ? 'REGRU-RU' : (zone === '.рф' ? 'REGTIME-RU' : 'RU-CENTER-RU');
                 const paidEl = document.getElementById('domain-dialog-whois-paid');
-                if (paidEl) paidEl.textContent = d.date;
+                if (paidEl) paidEl.textContent = cleanDate;
                 const extLink = document.getElementById('domain-dialog-direct-link');
                 if (extLink) extLink.href = 'http://' + d.domain;
 
