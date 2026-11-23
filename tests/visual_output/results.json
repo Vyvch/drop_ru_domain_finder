@@ -1,0 +1,34 @@
+{
+  "top_row": {
+    "similarity": 96.93379790940766,
+    "mismatch_ratio": 3.0662020905923346,
+    "diff_pixels": 3168,
+    "total_pixels": 103320,
+    "w": 1230,
+    "h": 84
+  },
+  "top_table": {
+    "similarity": 97.1321138211382,
+    "mismatch_ratio": 2.8678861788617884,
+    "diff_pixels": 4233,
+    "total_pixels": 147600,
+    "w": 1230,
+    "h": 120
+  },
+  "drawer": {
+    "similarity": 92.50568181818181,
+    "mismatch_ratio": 7.494318181818181,
+    "diff_pixels": 26380,
+    "total_pixels": 352000,
+    "w": 440,
+    "h": 800
+  },
+  "search": {
+    "similarity": 96.7217548076923,
+    "mismatch_ratio": 3.2782451923076925,
+    "diff_pixels": 2182,
+    "total_pixels": 66560,
+    "w": 1280,
+    "h": 52
+  }
+}
