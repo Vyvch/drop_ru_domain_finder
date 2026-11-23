@@ -1,16 +1,16 @@
 {
   "top_row": {
-    "similarity": 96.93379790940766,
-    "mismatch_ratio": 3.0662020905923346,
-    "diff_pixels": 3168,
+    "similarity": 96.07336430507162,
+    "mismatch_ratio": 3.926635694928378,
+    "diff_pixels": 4057,
     "total_pixels": 103320,
     "w": 1230,
     "h": 84
   },
   "top_table": {
-    "similarity": 97.1321138211382,
-    "mismatch_ratio": 2.8678861788617884,
-    "diff_pixels": 4233,
+    "similarity": 96.4369918699187,
+    "mismatch_ratio": 3.563008130081301,
+    "diff_pixels": 5259,
     "total_pixels": 147600,
     "w": 1230,
     "h": 120

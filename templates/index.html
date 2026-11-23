@@ -238,9 +238,29 @@
             font-family: 'JetBrains Mono', monospace;
         }
         .wayback-cell .wayback-history {
-            margin-top: 6px;
-            padding-top: 6px;
+            margin-top: 4px;
+            padding-top: 0;
+            border-top: none;
             font-size: 11px;
+        }
+        .wayback-cell .wayback-request,
+        .wayback-cell .wayback-retry {
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: 500;
+            background: #FFFFFF;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.12s ease;
+            font-family: 'Geist', 'IBM Plex Sans', sans-serif;
+            display: inline-block;
+        }
+        .wayback-cell .wayback-request:hover,
+        .wayback-cell .wayback-retry:hover {
+            background: var(--bg-secondary);
+            border-color: #A1A1AA;
         }
         #top-table th {
             padding: 10px 16px;
@@ -1578,32 +1598,11 @@
         let topHistoryBlocks = [];
         let topRequestSeq = 0;
 
-        function formatSnapshotsSummary(domain) {
-            if (domain === 'market-cloud.ru') return { count: '1 234 снимка', years: '2009 — 2026' };
-            if (domain === 'fin-tech.su') return { count: '8 540 снимков', years: '2015 — 2026' };
-            let h = 0;
-            for (let i = 0; i < domain.length; i++) h = (h * 31 + domain.charCodeAt(i)) >>> 0;
-            const count = 350 + (h % 8500);
-            const startYear = 2008 + (h % 14);
-            const countStr = new Intl.NumberFormat('ru-RU').format(count);
-            const lastDigit = count % 10;
-            const lastTwo = count % 100;
-            let word = 'снимков';
-            if (lastTwo < 11 || lastTwo > 14) {
-                if (lastDigit === 1) word = 'снимок';
-                else if (lastDigit >= 2 && lastDigit <= 4) word = 'снимка';
-            }
-            return { count: `${countStr} ${word}`, years: `${startYear} — 2026` };
-        }
-
         function waybackCell(domain) {
-            const summary = formatSnapshotsSummary(domain);
-            const history = el('div', {className: 'wayback-history hidden', attrs: {role: 'status', 'aria-live': 'polite'}});
+            const history = el('div', {className: 'wayback-history', attrs: {role: 'status', 'aria-live': 'polite'}});
             topHistoryBlocks.push(createHistoryBlock(history, domain));
             return el('td', {className: 'py-3 px-4 align-top font-mono text-xs whitespace-nowrap wayback-cell'}, [
-                el('div', {className: 'text-text font-semibold', text: summary.count}),
-                el('div', {className: 'text-[11px] text-text-muted', text: summary.years}),
-                el('a', {className: 'wayback-link inline-block mt-1 text-[11px] text-accent font-sans hover:underline',
+                el('a', {className: 'wayback-link inline-block mb-1 text-[11px] text-accent font-sans hover:underline',
                          href: WaybackCore.archiveUrl(domain),
                          text: 'Открыть слепки ↗',
                          attrs: {target: '_blank', rel: 'noopener noreferrer'}}),
