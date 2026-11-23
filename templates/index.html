@@ -1030,7 +1030,12 @@
                 loader.start();
             }
 
-            show(waybackMemo.get(domain) || {kind: 'idle'});
+            const cached = waybackMemo.get(domain);
+            if (cached) {
+                show({ ...cached, cached: true });
+            } else {
+                show({ kind: 'idle' });
+            }
             return {
                 dispose() {
                     loader?.cancel();
@@ -1339,44 +1344,59 @@
             if (domain) copyText(domain);
         }
 
-        function updateDrawerWaybackMetrics(result) {
-            const countEl = document.getElementById('domain-dialog-metric-count');
-            const firstEl = document.getElementById('domain-dialog-metric-first');
-            const lastEl = document.getElementById('domain-dialog-metric-last');
-            const statusEl = document.getElementById('domain-dialog-cache-status');
-            const dotEl = document.getElementById('domain-dialog-cache-dot');
-            if (!countEl || !firstEl || !lastEl) return;
+        function extractYear(snapshot) {
+            if (!snapshot) return '—';
+            if (snapshot.date && typeof snapshot.date === 'string') return snapshot.date.substring(0, 4);
+            if (snapshot.dateText && typeof snapshot.dateText === 'string') {
+                const parts = snapshot.dateText.split('.');
+                if (parts.length === 3) return parts[2];
+                return snapshot.dateText;
+            }
+            return '—';
+        }
 
-            if (result.kind === 'loading') {
-                countEl.textContent = '...';
-                firstEl.textContent = '...';
-                lastEl.textContent = '...';
-                if (statusEl) statusEl.textContent = 'Запрос в архив...';
-                if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse';
-            } else if (result.kind === 'success') {
-                countEl.textContent = WaybackCore.formatCount(result.count, result.truncated);
-                firstEl.textContent = result.first ? result.first.date.substring(0, 4) : '—';
-                lastEl.textContent = result.last ? result.last.date.substring(0, 4) : '—';
-                if (statusEl) statusEl.textContent = result.cached ? 'Из кэша (0.1с)' : 'Из архива';
-                if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-success-green';
-            } else if (result.kind === 'empty') {
-                countEl.textContent = '0';
-                firstEl.textContent = '—';
-                lastEl.textContent = '—';
-                if (statusEl) statusEl.textContent = 'Нет снимков';
-                if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400';
-            } else if (result.kind === 'idle') {
-                countEl.textContent = '—';
-                firstEl.textContent = '—';
-                lastEl.textContent = '—';
-                if (statusEl) statusEl.textContent = 'Не запрошено';
-                if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400';
-            } else {
-                countEl.textContent = '—';
-                firstEl.textContent = '—';
-                lastEl.textContent = '—';
-                if (statusEl) statusEl.textContent = 'Ошибка архива';
-                if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-danger-red';
+        function updateDrawerWaybackMetrics(result) {
+            try {
+                const countEl = document.getElementById('domain-dialog-metric-count');
+                const firstEl = document.getElementById('domain-dialog-metric-first');
+                const lastEl = document.getElementById('domain-dialog-metric-last');
+                const statusEl = document.getElementById('domain-dialog-cache-status');
+                const dotEl = document.getElementById('domain-dialog-cache-dot');
+                if (!countEl || !firstEl || !lastEl) return;
+
+                if (result.kind === 'loading') {
+                    countEl.textContent = '...';
+                    firstEl.textContent = '...';
+                    lastEl.textContent = '...';
+                    if (statusEl) statusEl.textContent = 'Запрос в архив...';
+                    if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse';
+                } else if (result.kind === 'success') {
+                    countEl.textContent = WaybackCore.formatCount(result.count, result.truncated);
+                    firstEl.textContent = extractYear(result.first);
+                    lastEl.textContent = extractYear(result.last);
+                    if (statusEl) statusEl.textContent = result.cached ? 'Из кэша (0.1с)' : 'Из архива';
+                    if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-success-green';
+                } else if (result.kind === 'empty') {
+                    countEl.textContent = '0';
+                    firstEl.textContent = '—';
+                    lastEl.textContent = '—';
+                    if (statusEl) statusEl.textContent = 'Нет снимков';
+                    if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400';
+                } else if (result.kind === 'idle') {
+                    countEl.textContent = '—';
+                    firstEl.textContent = '—';
+                    lastEl.textContent = '—';
+                    if (statusEl) statusEl.textContent = 'Не запрошено';
+                    if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400';
+                } else {
+                    countEl.textContent = '—';
+                    firstEl.textContent = '—';
+                    lastEl.textContent = '—';
+                    if (statusEl) statusEl.textContent = 'Ошибка архива';
+                    if (dotEl) dotEl.className = 'w-1.5 h-1.5 rounded-full bg-error-red';
+                }
+            } catch (err) {
+                console.error('Error updating drawer wayback metrics:', err);
             }
         }
 
@@ -1453,60 +1473,89 @@
         }
 
         const domainDialog = document.getElementById('domain-dialog');
+        let currentDrawerHistory = null;
 
         function openDomainDialog(d) {
-            document.getElementById('domain-dialog-title').textContent = d.domain;
-            document.getElementById('domain-dialog-date').textContent = d.date;
-            
-            let punycode = null;
-            if (/[^\x00-\x7F]/.test(d.domain) || d.domain.endsWith('.рф')) {
-                try {
-                    const host = new URL('http://' + d.domain).hostname;
-                    if (host !== d.domain) punycode = host;
-                } catch (e) {}
-            }
-            const punyEl = document.getElementById('domain-dialog-punycode');
-            if (punyEl) {
-                if (punycode) {
-                    punyEl.textContent = punycode;
-                    punyEl.classList.remove('hidden');
-                } else {
-                    punyEl.textContent = '';
-                    punyEl.classList.add('hidden');
+            try {
+                if (domainDialog && domainDialog.open) {
+                    domainDialog.close();
                 }
+
+                document.getElementById('domain-dialog-title').textContent = d.domain;
+                document.getElementById('domain-dialog-date').textContent = d.date;
+                
+                let punycode = null;
+                if (/[^\x00-\x7F]/.test(d.domain) || d.domain.endsWith('.рф')) {
+                    try {
+                        const host = new URL('http://' + d.domain).hostname;
+                        if (host !== d.domain) punycode = host;
+                    } catch (e) {}
+                }
+                const punyEl = document.getElementById('domain-dialog-punycode');
+                if (punyEl) {
+                    if (punycode) {
+                        punyEl.textContent = punycode;
+                        punyEl.classList.remove('hidden');
+                    } else {
+                        punyEl.textContent = '';
+                        punyEl.classList.add('hidden');
+                    }
+                }
+
+                const parts = d.domain.split('.');
+                const zone = parts.length > 1 ? '.' + parts.slice(1).join('.') : '';
+                const regEl = document.getElementById('domain-dialog-whois-reg');
+                if (regEl) regEl.textContent = zone === '.su' ? 'REGRU-RU' : (zone === '.рф' ? 'REGTIME-RU' : 'RU-CENTER-RU');
+                const paidEl = document.getElementById('domain-dialog-whois-paid');
+                if (paidEl) paidEl.textContent = d.date;
+                const extLink = document.getElementById('domain-dialog-direct-link');
+                if (extLink) extLink.href = 'http://' + d.domain;
+
+                const linkEl = domainDialog.querySelector('.wayback-link');
+                if (linkEl) linkEl.href = WaybackCore.archiveUrl(d.domain);
+
+                if (currentDrawerHistory) {
+                    currentDrawerHistory.dispose();
+                    currentDrawerHistory = null;
+                }
+                const historyContainer = domainDialog.querySelector('.wayback-history');
+                if (historyContainer) {
+                    currentDrawerHistory = createHistoryBlock(historyContainer, d.domain, updateDrawerWaybackMetrics);
+                }
+
+                if (domainDialog && typeof domainDialog.showModal === 'function') {
+                    domainDialog.showModal();
+                }
+            } catch (err) {
+                console.error('Error opening domain dialog:', err);
+                try { domainDialog.showModal(); } catch (e) {}
             }
-
-            const parts = d.domain.split('.');
-            const zone = parts.length > 1 ? '.' + parts.slice(1).join('.') : '';
-            const regEl = document.getElementById('domain-dialog-whois-reg');
-            if (regEl) regEl.textContent = zone === '.su' ? 'REGRU-RU' : (zone === '.рф' ? 'REGTIME-RU' : 'RU-CENTER-RU');
-            const paidEl = document.getElementById('domain-dialog-whois-paid');
-            if (paidEl) paidEl.textContent = d.date;
-            const extLink = document.getElementById('domain-dialog-direct-link');
-            if (extLink) extLink.href = 'http://' + d.domain;
-
-            domainDialog.querySelector('.wayback-link').href = WaybackCore.archiveUrl(d.domain);
-            const history = createHistoryBlock(domainDialog.querySelector('.wayback-history'), d.domain, updateDrawerWaybackMetrics);
-            domainDialog.addEventListener('close', () => history.dispose(), {once: true});
-            domainDialog.showModal();
         }
 
-        const closeBtn = domainDialog.querySelector('.domain-dialog-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                domainDialog.close();
+        if (domainDialog) {
+            domainDialog.addEventListener('close', () => {
+                if (currentDrawerHistory) {
+                    currentDrawerHistory.dispose();
+                    currentDrawerHistory = null;
+                }
+            });
+            const closeBtn = domainDialog.querySelector('.domain-dialog-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    domainDialog.close();
+                });
+            }
+            domainDialog.addEventListener('click', event => {
+                if (event.target === domainDialog) domainDialog.close();
+            });
+            window.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && domainDialog.open) {
+                    domainDialog.close();
+                }
             });
         }
-        domainDialog.addEventListener('click', event => {
-            if (event.target === domainDialog) domainDialog.close();
-        });
-        window.addEventListener('keydown', event => {
-            if (event.key === 'Escape' && domainDialog.open) {
-                domainDialog.close();
-            }
-        });
 
         function jumpToPage() {
             let val = parseInt(document.getElementById('page-input').value);
